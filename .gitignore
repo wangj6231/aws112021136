@@ -1,0 +1,5 @@
+# 忽略含有 AWS 金鑰的下載腳本與暫存檔
+download_m06a.py
+test.txt
+.env*
+*.local
