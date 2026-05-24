@@ -137,3 +137,22 @@ WHERE travel_type = 'exiting'
 GROUP BY gantry_id_o
 ORDER BY "旅次量" DESC
 LIMIT 10;
+
+
+-- -------------------------------------------------------------------------
+-- 專用大功能 5：導出「多維度車流資料庫 CSV」(專供互動式 Web 視覺化工作台對接使用)
+-- -------------------------------------------------------------------------
+-- 執行此 SQL 查詢，將結果「下載為 CSV」並命名為 database.csv。
+-- 將該 CSV 檔案直接拖入網頁，即可瞬間解鎖 28 天所有日期、車種、方向、上/下/直行行為的無限交叉查詢！
+SELECT 
+    date AS "date",
+    vehicle_type AS "vehicle_type",
+    direction AS "direction",
+    travel_type AS "travel_type",
+    CAST(SUBSTR(direction_time_o, 12, 2) AS INT) AS "hour_of_day",
+    COUNT(*) AS "trip_count",
+    ROUND(AVG(trip_length), 2) AS "avg_trip_length"
+FROM tdcs_db.m06a_yongkang
+WHERE date BETWEEN '20260426' AND '20260523'
+GROUP BY date, vehicle_type, direction, travel_type, CAST(SUBSTR(direction_time_o, 12, 2) AS INT)
+ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;
