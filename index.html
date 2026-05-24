@@ -177,11 +177,11 @@
 
         .filter-grid {
             display: grid;
-            grid-template-columns: 1.5fr 1.2fr 1fr 1fr;
-            gap: 1.5rem;
+            grid-template-columns: 1fr 1.3fr 1fr 1fr 1fr;
+            gap: 1.25rem;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             .filter-grid {
                 grid-template-columns: 1fr 1fr;
             }
@@ -833,16 +833,27 @@
                 
                 <div class="filter-grid">
                     <!-- 1. 選擇日期 -->
+                    <!-- 1. 時間分析粒度 -->
                     <div class="filter-group">
-                        <span class="filter-label"><i data-lucide="calendar" style="width: 14px; height: 14px;"></i> 1. 選擇分析日期</span>
-                        <select id="filter-date" class="picker-select" onchange="runQuery()">
-                            <!-- 動態填充 -->
+                        <span class="filter-label"><i data-lucide="calendar-days" style="width: 14px; height: 14px;"></i> 1. 時間分析粒度</span>
+                        <select id="filter-granularity" class="picker-select" onchange="handleGranularityChange()">
+                            <option value="daily">單日分析 (Daily)</option>
+                            <option value="weekly">單週分析 (Weekly)</option>
+                            <option value="monthly">單月分析 (Monthly)</option>
                         </select>
                     </div>
 
-                    <!-- 2. 選擇車種 -->
+                    <!-- 2. 選擇分析區間 -->
                     <div class="filter-group">
-                        <span class="filter-label"><i data-lucide="truck" style="width: 14px; height: 14px;"></i> 2. 選擇車輛車種</span>
+                        <span class="filter-label"><i data-lucide="calendar-range" style="width: 14px; height: 14px;"></i> 2. 選擇分析區間</span>
+                        <select id="filter-date" class="picker-select" onchange="runQuery()">
+                            <!-- 動態連動填充 -->
+                        </select>
+                    </div>
+
+                    <!-- 3. 選擇車種 -->
+                    <div class="filter-group">
+                        <span class="filter-label"><i data-lucide="truck" style="width: 14px; height: 14px;"></i> 3. 選擇車輛車種</span>
                         <select id="filter-vehicle" class="picker-select" onchange="runQuery()">
                             <option value="all">全部車種</option>
                             <option value="31">31 - 小客車 (Sedan)</option>
@@ -853,9 +864,9 @@
                         </select>
                     </div>
 
-                    <!-- 3. 選擇方向 -->
+                    <!-- 4. 選擇方向 -->
                     <div class="filter-group">
-                        <span class="filter-label"><i data-lucide="navigation" style="width: 14px; height: 14px;"></i> 3. 選擇行車方向</span>
+                        <span class="filter-label"><i data-lucide="navigation" style="width: 14px; height: 14px;"></i> 4. 選擇行車方向</span>
                         <select id="filter-dir" class="picker-select" onchange="runQuery()">
                             <option value="all">全部方向</option>
                             <option value="N">北上 (Northbound)</option>
@@ -863,9 +874,9 @@
                         </select>
                     </div>
 
-                    <!-- 4. 選擇行為 -->
+                    <!-- 5. 選擇行為 -->
                     <div class="filter-group">
-                        <span class="filter-label"><i data-lucide="activity" style="width: 14px; height: 14px;"></i> 4. 選擇車流行為</span>
+                        <span class="filter-label"><i data-lucide="activity" style="width: 14px; height: 14px;"></i> 5. 選擇車流行為</span>
                         <select id="filter-type" class="picker-select" onchange="runQuery()">
                             <option value="all">全部行為</option>
                             <option value="entering">上交流道 (Entering)</option>
@@ -1383,6 +1394,11 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
         // 內存多維度資料庫陣列
         let DATABASE_RECORDS = [];
 
+        // 全域時間分組資料庫
+        let WEEK_GROUPS = {}; // { "week_1": ["20260301", ...], ... }
+        let MONTH_GROUPS = {}; // { "202603": ["20260301", ...], ... }
+        let UNIQUE_DATES = []; // sorted unique date strings
+
         // 預設預載的 3/1~5/23 Real-like 多維度車流數據庫
         const PRELOADED_MOCK_RECORDS = [];
 
@@ -1640,37 +1656,115 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
             });
         });
 
-        // 重新填充日期下拉選單
-        function repopulateDatePicker() {
-            const uniqueDates = new Set();
-            DATABASE_RECORDS.forEach(r => uniqueDates.add(r.date));
-            
-            const datePicker = document.getElementById('filter-date');
-            datePicker.innerHTML = ''; // 清空舊選項
+        // 建立時間維度分組 (日/週/月)
+        function buildTimeGroups() {
+            WEEK_GROUPS = {};
+            MONTH_GROUPS = {};
+            UNIQUE_DATES = [];
 
-            const sortedDates = Array.from(uniqueDates).sort();
-            sortedDates.forEach(date => {
-                const formatted = `2026/${date.substring(4,6)}/${date.substring(6,8)}`;
-                
-                // 計算星期幾
-                const dateObj = new Date(
-                    parseInt(date.substring(0,4)),
-                    parseInt(date.substring(4,6)) - 1,
-                    parseInt(date.substring(6,8))
-                );
-                const weekdays = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
-                const dayName = weekdays[dateObj.getDay()];
-                
-                const opt = document.createElement('option');
-                opt.value = date;
-                opt.text = `${formatted} (${dayName})`;
-                datePicker.add(opt);
+            const datesSet = new Set();
+            DATABASE_RECORDS.forEach(r => datesSet.add(r.date));
+            UNIQUE_DATES = Array.from(datesSet).sort();
+
+            if (UNIQUE_DATES.length === 0) return;
+
+            // 1. 建立月份分組
+            UNIQUE_DATES.forEach(dateStr => {
+                const monthPrefix = dateStr.substring(0, 6); // YYYYMM
+                if (!MONTH_GROUPS[monthPrefix]) {
+                    MONTH_GROUPS[monthPrefix] = [];
+                }
+                MONTH_GROUPS[monthPrefix].push(dateStr);
             });
 
-            if (sortedDates.length > 0) {
-                // 預設選擇第一個日期
-                datePicker.value = sortedDates[0];
+            // 2. 建立週分組 (以 2026-03-01 週日為基準對照)
+            const baseDate = new Date(2026, 2, 1); // 2026-03-01 is Sunday
+
+            UNIQUE_DATES.forEach(dateStr => {
+                const y = parseInt(dateStr.substring(0, 4));
+                const m = parseInt(dateStr.substring(4, 6)) - 1;
+                const d = parseInt(dateStr.substring(6, 8));
+                const currentDate = new Date(y, m, d);
+
+                const diffTime = currentDate - baseDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                let weekNum = Math.floor(diffDays / 7) + 1;
+                if (weekNum < 1) weekNum = 1;
+
+                const weekKey = `week_${weekNum}`;
+                if (!WEEK_GROUPS[weekKey]) {
+                    WEEK_GROUPS[weekKey] = [];
+                }
+                WEEK_GROUPS[weekKey].push(dateStr);
+            });
+        }
+
+        // 重新填充日期/區間下拉選單
+        function repopulateDatePicker() {
+            buildTimeGroups();
+            handleGranularityChange(); // 動態觸發區間選單更新
+        }
+
+        // 處理時間分析粒度變更 (連動式選項)
+        function handleGranularityChange() {
+            const granularity = document.getElementById('filter-granularity').value;
+            const picker = document.getElementById('filter-date');
+            picker.innerHTML = ''; // 清空舊選項
+
+            if (granularity === 'daily') {
+                UNIQUE_DATES.forEach(date => {
+                    const formatted = `2026/${date.substring(4,6)}/${date.substring(6,8)}`;
+                    
+                    const dateObj = new Date(
+                        parseInt(date.substring(0,4)),
+                        parseInt(date.substring(4,6)) - 1,
+                        parseInt(date.substring(6,8))
+                    );
+                    const weekdays = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+                    const dayName = weekdays[dateObj.getDay()];
+                    
+                    const opt = document.createElement('option');
+                    opt.value = date;
+                    opt.text = `📅 單日：${formatted} (${dayName})`;
+                    picker.add(opt);
+                });
+            } else if (granularity === 'weekly') {
+                const sortedWeeks = Object.keys(WEEK_GROUPS).sort((a, b) => {
+                    return parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]);
+                });
+
+                sortedWeeks.forEach(weekKey => {
+                    const dates = WEEK_GROUPS[weekKey];
+                    const weekNum = weekKey.split('_')[1];
+                    const firstDate = dates[0];
+                    const lastDate = dates[dates.length - 1];
+                    
+                    const formattedFirst = `${firstDate.substring(4,6)}/${firstDate.substring(6,8)}`;
+                    const formattedLast = `${lastDate.substring(4,6)}/${lastDate.substring(6,8)}`;
+
+                    const opt = document.createElement('option');
+                    opt.value = weekKey;
+                    opt.text = `🗓️ 第 ${weekNum} 週 (${formattedFirst} ~ ${formattedLast})`;
+                    picker.add(opt);
+                });
+            } else if (granularity === 'monthly') {
+                const sortedMonths = Object.keys(MONTH_GROUPS).sort();
+                sortedMonths.forEach(monthKey => {
+                    const year = monthKey.substring(0, 4);
+                    const month = monthKey.substring(4, 6);
+                    
+                    const opt = document.createElement('option');
+                    opt.value = monthKey;
+                    opt.text = `📆 月份：${year} 年 ${parseInt(month)} 月`;
+                    picker.add(opt);
+                });
             }
+
+            if (picker.options.length > 0) {
+                picker.selectedIndex = 0;
+            }
+            runQuery(); // 執行實時多維查詢
         }
 
         // 頁面視圖切換
@@ -1692,22 +1786,32 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
             }
         }
 
-        // 核心：內存大數據多維度篩選引擎 (In-Memory Database Engine)
+        // 核心：內存大數據多維度篩選引擎 (In-Memory Database Engine) - 支援日/週/月三維度聚合
         function runQuery() {
-            const filterDate = document.getElementById('filter-date').value;
+            const granularity = document.getElementById('filter-granularity').value;
+            const filterPeriod = document.getElementById('filter-date').value;
             const filterVehicle = document.getElementById('filter-vehicle').value;
             const filterDir = document.getElementById('filter-dir').value;
             const filterType = document.getElementById('filter-type').value;
 
-            if (!filterDate) return;
+            if (!filterPeriod) return;
 
-            // 1. 執行過濾 (JS 內存 Filter)
+            // 1. 執行過濾 (JS 內存 Filter, 連動支援日/週/月)
             const filtered = DATABASE_RECORDS.filter(r => {
-                const matchDate = (r.date === filterDate);
+                let matchTime = false;
+                if (granularity === 'daily') {
+                    matchTime = (r.date === filterPeriod);
+                } else if (granularity === 'weekly') {
+                    const weekDates = WEEK_GROUPS[filterPeriod] || [];
+                    matchTime = weekDates.includes(r.date);
+                } else if (granularity === 'monthly') {
+                    matchTime = r.date.startsWith(filterPeriod);
+                }
+
                 const matchVeh = (filterVehicle === 'all' || r.vehicle_type === filterVehicle);
                 const matchDir = (filterDir === 'all' || r.direction === filterDir);
                 const matchType = (filterType === 'all' || r.travel_type === filterType);
-                return matchDate && matchVeh && matchDir && matchType;
+                return matchTime && matchVeh && matchDir && matchType;
             });
 
             // 備份供明細表格搜尋/排序/分頁
@@ -1771,10 +1875,21 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
             document.getElementById('stat-exiting').innerText = exitTrips.toLocaleString();
             document.getElementById('stat-avg-mileage').innerText = `${avgMileage} km`;
 
-            // 更新卡片下方的分析描述
-            const formattedDate = `${filterDate.substring(0,4)}/${filterDate.substring(4,6)}/${filterDate.substring(6,8)}`;
+            // 更新卡片下方的分析描述，增添學術報告專業感
+            let periodLabel = "";
+            if (granularity === 'daily') {
+                periodLabel = `日期: ${filterPeriod.substring(0,4)}/${filterPeriod.substring(4,6)}/${filterPeriod.substring(6,8)}`;
+            } else if (granularity === 'weekly') {
+                const dates = WEEK_GROUPS[filterPeriod] || [];
+                const first = dates[0];
+                const last = dates[dates.length - 1];
+                periodLabel = `第 ${filterPeriod.split('_')[1]} 週 (${first.substring(4,6)}/${first.substring(6,8)} ~ ${last.substring(4,6)}/${last.substring(6,8)})`;
+            } else if (granularity === 'monthly') {
+                periodLabel = `月份: ${filterPeriod.substring(0,4)} 年 ${parseInt(filterPeriod.substring(4,6))} 月`;
+            }
+
             document.querySelectorAll('.stat-card .stat-desc').forEach(el => {
-                el.innerText = `日期: ${formattedDate} 的交叉檢索結果`;
+                el.innerText = `${periodLabel} 的交叉檢索結果`;
             });
 
             // 4. 即時更新 24小時車流趨勢折線圖
