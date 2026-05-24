@@ -809,7 +809,7 @@
         <div id="db-status-banner" class="db-status-banner demo">
             <div class="db-status-banner-content">
                 <i data-lucide="info" id="db-status-banner-icon" style="color: #fbbf24; width: 18px; height: 18px; display: inline-block; vertical-align: middle;"></i>
-                <span id="db-status-banner-text" style="line-height: 1.4;">運行中：示範資料庫模式 (4/26~5/23)。若已在 Athena 執行 Query 5，請下載並重命名為 `database.csv` 放入專案資料夾即可自動載入真實 28 天資料庫！</span>
+                <span id="db-status-banner-text" style="line-height: 1.4;">運行中：示範資料庫模式 (3/1~5/23)。若已在 Athena 執行 Query 5，請下載並重命名為 `database.csv` 放入專案資料夾即可自動載入真實 12 週 (84 天) 資料庫！</span>
             </div>
             <button class="tab-btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background: rgba(255,255,255,0.05);" onclick="switchView('uploader')">
                 <i data-lucide="upload-cloud" style="width: 14px; height: 14px;"></i> 前往載入/上傳
@@ -992,7 +992,7 @@
                 <i data-lucide="upload-cloud" class="dropzone-icon" style="width: 60px; height: 60px;"></i>
                 <h2>在此處拖放從 Athena 導出的多維資料庫 CSV 檔案 (database.csv)</h2>
                 <p style="color: var(--text-secondary)">執行 Athena 中的 **Query 5**，下載結果 CSV 檔拖放到此處</p>
-                <span class="student-badge"><i data-lucide="zap" style="width: 14px; height: 14px;"></i> 瞬間解鎖 4/26 至 5/23 完整 28 天所有車種/方向的隨選隨查與瀏覽器快取功能！</span>
+                <span class="student-badge"><i data-lucide="zap" style="width: 14px; height: 14px;"></i> 瞬間解鎖 3/1 至 5/23 完整 12 週 (84 天) 所有車種/方向的隨選隨查與瀏覽器快取功能！</span>
                 <input type="file" id="file-input" style="display: none;" accept=".csv" onchange="handleFileSelect(event)">
             </div>
 
@@ -1001,7 +1001,7 @@
                 <div class="chart-title" style="color: var(--primary-cyan);">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <i data-lucide="info"></i>
-                        <span>💡 如何實現網頁「打開即自動載入 28 天真實資料庫」？</span>
+                        <span>💡 如何實現網頁「打開即自動載入 12 週 (84 天) 真實資料庫」？</span>
                     </div>
                 </div>
                 <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.75rem;">
@@ -1013,7 +1013,7 @@
                         <li><strong>步驟 4</strong>：將專案推送（Push）到您的 GitHub 倉庫，Vercel 將自動重新構建部署。</li>
                     </ol>
                     <p style="background: rgba(0, 242, 254, 0.03); border: 1px solid rgba(0, 242, 254, 0.1); padding: 0.75rem; border-radius: 8px; color: var(--text-primary);">
-                        ✨ <strong>構建完成後</strong>，任何人訪問您的網頁，系統都會在背景自動偵測下載 <code>database.csv</code>，直接解鎖完整 28 天數據！同時，拖放上傳過的檔案會永久儲存在您的個人瀏覽器中，即使離線也能秒速查詢！
+                        ✨ <strong>構建完成後</strong>，任何人訪問您的網頁，系統都會在背景自動偵測下載 <code>database.csv</code>，直接解鎖完整 12 週 (84 天) 數據！同時，拖放上傳過的檔案會永久儲存在您的個人瀏覽器中，即使離線也能秒速查詢！
                     </p>
                 </div>
             </div>
@@ -1077,7 +1077,7 @@
                             <span>5. 網頁專用多維度資料庫導出</span>
                             <i data-lucide="zap" style="color: var(--primary-cyan)"></i>
                         </div>
-                        <span class="query-btn-desc">【重要】導出 28 天所有條件聚合 CSV 對接本系統</span>
+                        <span class="query-btn-desc">【重要】導出 12 週 (84 天) 所有條件聚合 CSV 對接本系統</span>
                     </button>
                 </div>
 
@@ -1239,7 +1239,7 @@ WITH weekly_base AS (
             WHEN 'passing' THEN '直行過境'
         END AS behavior
     FROM tdcs_db.m06a_yongkang
-    WHERE date BETWEEN '20260426' AND '20260523'
+    WHERE date BETWEEN '20260301' AND '20260523'
 )
 SELECT 
     '第 ' || CAST(week_num AS VARCHAR) || ' 週' AS "分析週別",
@@ -1288,7 +1288,7 @@ ORDER BY "旅次量" DESC
 LIMIT 10;`,
 
 `-- 5. 導出多維度車流資料庫 CSV (對接本互動工作台)
--- 執行此 SQL 查詢並下載為 CSV。直接命名為 database.csv 放到專案目錄，解鎖 28 天所有日期的隨選查詢！
+-- 執行此 SQL 查詢並下載為 CSV。直接命名為 database.csv 放到專案目錄，解鎖 12 週 (84 天) 所有日期的隨選查詢！
 SELECT 
     date AS "date",
     vehicle_type AS "vehicle_type",
@@ -1298,7 +1298,7 @@ SELECT
     COUNT(*) AS "trip_count",
     ROUND(AVG(trip_length), 2) AS "avg_trip_length"
 FROM tdcs_db.m06a_yongkang
-WHERE date BETWEEN '20260426' AND '20260523'
+WHERE date BETWEEN '20260301' AND '20260523'
 GROUP BY date, vehicle_type, direction, travel_type, CAST(SUBSTR(direction_time_o, 12, 2) AS INT)
 ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
         ];
@@ -1322,7 +1322,7 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
                 title: "2. 每週車流變化與行為交叉分析",
                 desc: "比較 4 週、8 週與 12 週的流量起伏。將日期藉由 date_diff 自動換算為對應的週別，並以 CROSS TAB 統計上交流道、下交流道與直行過境車流，是觀測交通成長的核心數據。",
                 engine: "引擎：Presto SQL / CTE & Date Diff",
-                perf: "效能：分區過濾，自動避開 2026/04/26 以外的資料",
+                perf: "效能：分區過濾，自動避開 2026/03/01 以外的資料",
                 cost: "費用：極省，S3 Partition 節省 90% 以上掃描開銷"
             },
             {
@@ -1341,7 +1341,7 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
             },
             {
                 title: "5. 網頁專用多維度資料庫導出 (Master DB Export)",
-                desc: "【本網頁專屬超強功能】這條 SQL 能把雲端百萬筆明細，在 2 秒內於後台自動按照「日期、車種、方向、行為」進行交叉聯集，輸出為一個精簡的多維度本地資料庫。將導出後的 CSV 檔案命名為 database.csv 放到本專案根路徑下，或直接拖入網頁，即可徹底解鎖 28 天所有日期的多條件無限自由查詢！",
+                desc: "【本網頁專屬超強功能】這條 SQL 能把雲端百萬筆明細，在 2 秒內於後台自動按照「日期、車種、方向、行為」進行交叉聯集，輸出為一個精簡的多維度本地資料庫。將導出後的 CSV 檔案命名為 database.csv 放到本專案根路徑下，或直接拖入網頁，即可徹底解鎖 12 週 (84 天) 所有日期的多條件無限自由查詢！",
                 engine: "引擎：Presto SQL / Multidimensional Aggregation Cube",
                 perf: "效能：極速多維度交叉聯集，將百萬行精煉至 1 萬行",
                 cost: "費用：約 $0.0001 (一生僅需執行一次，直接建立本地隨選資料庫！)"
@@ -1383,11 +1383,11 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
         // 內存多維度資料庫陣列
         let DATABASE_RECORDS = [];
 
-        // 預設預載的 4/26~5/23 Real-like 多維度車流數據庫
+        // 預設預載的 3/1~5/23 Real-like 多維度車流數據庫
         const PRELOADED_MOCK_RECORDS = [];
 
-        // 生成預載數據，以供網頁一打開就有完整的篩選體驗 (4/26 - 5/23)
-        const datesToGen = ["20260426", "20260501", "20260510", "20260517", "20260523"];
+        // 生成預載數據，以供網頁一打開就有完整的篩選體驗 (3/1 - 5/23)
+        const datesToGen = ["20260301", "20260426", "20260501", "20260510", "20260517", "20260523"];
         const vehiclesToGen = ["31", "32", "41", "42", "5"];
         const directionsToGen = ["N", "S"];
         const travelTypesToGen = ["entering", "exiting", "passing"];
@@ -1422,10 +1422,10 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
                             else if (hr >= 22 || hr <= 4) hourFactor = 0.15; // 深夜
 
                             // 假日尖峰延後波形
-                            if ((date === "20260426" || date === "20260510" || date === "20260517" || date === "20260523") && hr >= 7 && hr <= 9) {
+                            if ((date === "20260301" || date === "20260426" || date === "20260510" || date === "20260517" || date === "20260523") && hr >= 7 && hr <= 9) {
                                 hourFactor = 1.1; // 假日早上無通勤尖峰
                             }
-                            if ((date === "20260426" || date === "20260510" || date === "20260517" || date === "20260523") && hr >= 14 && hr <= 17) {
+                            if ((date === "20260301" || date === "20260426" || date === "20260510" || date === "20260517" || date === "20260523") && hr >= 14 && hr <= 17) {
                                 hourFactor = 2.1; // 假日出遊返家尖峰
                             }
 
@@ -1586,7 +1586,7 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
                 // 解析並更新資料庫
                 parseCSVToDatabase(rows, headers, false);
                 saveToIndexedDB(DATABASE_RECORDS);
-                updateStatusBanner('success', '已自動載入雲端 4/26~5/23 真實國道大數據庫！隨選隨查功能已完全解鎖。');
+                updateStatusBanner('success', '已自動載入雲端 3/1~5/23 真實國道大數據庫！隨選隨查功能已完全解鎖。');
                 return true;
             } catch (e) {
                 console.log("Auto-fetch server database failed or skipped:", e.message);
@@ -1615,10 +1615,10 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
                     updateStatusBanner('success', '已成功加載瀏覽器 IndexedDB 快取資料庫！隨選隨查功能已完全解鎖。');
                     runQuery();
                 } else {
-                    // 4. 降級使用高保真預載示範數據 (4/26~5/23)
+                    // 4. 降級使用高保真預載示範數據 (3/1~5/23)
                     DATABASE_RECORDS = PRELOADED_MOCK_RECORDS;
                     repopulateDatePicker();
-                    updateStatusBanner('demo', '運行中：示範資料庫模式 (4/26~5/23)。若已在 Athena 執行 Query 5，請下載並重命名為 `database.csv` 放入專案資料夾即可自動載入真實 28 天資料庫！');
+                    updateStatusBanner('demo', '運行中：示範資料庫模式 (3/1~5/23)。若已在 Athena 執行 Query 5，請下載並重命名為 `database.csv` 放入專案資料夾即可自動載入真實 12 週 (84 天) 資料庫！');
                     runQuery();
                 }
             }
@@ -2296,11 +2296,11 @@ ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;`
             // 更新全域內存資料庫
             DATABASE_RECORDS = newRecords;
 
-            // 重新載入下拉選單 (解鎖 28 天所有日期！)
+            // 重新載入下拉選單 (解鎖 12 週所有日期！)
             repopulateDatePicker();
 
             if (showCelebration) {
-                updateStatusBanner('success', '已成功加載拖放上傳的真實 28 天多維度資料庫！');
+                updateStatusBanner('success', '已成功加載拖放上傳的真實 12 週 (84 天) 多維度資料庫！');
             }
         }
 

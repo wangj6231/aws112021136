@@ -1,6 +1,7 @@
 -- =========================================================================
 -- Amazon Athena SQL 建表與大數據交叉分析查詢 (已修正為相容 Athena 的雙引號)
 -- 專案目標：台南永康交流道 (319K) 車流行為分析 (M06A 旅次資料)
+-- 分析時間範圍：2026/03/01 ~ 2026/05/23 (完整 12 週大數據庫)
 -- =========================================================================
 
 -- -------------------------------------------------------------------------
@@ -57,12 +58,12 @@ ORDER BY vehicle_type;
 
 
 -- -------------------------------------------------------------------------
--- 分析指標 2：每週車流變化與行為交叉分析 (上交流道、下交流道、直行)
+-- 分析指標 2：每週車流變化與行為交叉分析 (上交流道、下交流道、直行) - 覆蓋 12 週
 -- -------------------------------------------------------------------------
 WITH weekly_base AS (
     SELECT 
         date,
-        -- 計算日期與 2026-03-01 的差距，以判定是第幾週
+        -- 計算日期與 2026-03-01 的差距，以判定是第幾週 (1 到 12 週)
         (date_diff('day', DATE '2026-03-01', CAST(SUBSTR(date, 1, 4) || '-' || SUBSTR(date, 5, 2) || '-' || SUBSTR(date, 7, 2) AS DATE)) / 7) + 1 AS week_num,
         direction,
         CASE travel_type
@@ -71,7 +72,7 @@ WITH weekly_base AS (
             WHEN 'passing' THEN '直行過境'
         END AS behavior
     FROM tdcs_db.m06a_yongkang
-    WHERE date BETWEEN '20260426' AND '20260523'
+    WHERE date BETWEEN '20260301' AND '20260523'
 )
 SELECT 
     '第 ' || CAST(week_num AS VARCHAR) || ' 週' AS "分析週別",
@@ -143,7 +144,7 @@ LIMIT 10;
 -- 專用大功能 5：導出「多維度車流資料庫 CSV」(專供互動式 Web 視覺化工作台對接使用)
 -- -------------------------------------------------------------------------
 -- 執行此 SQL 查詢，將結果「下載為 CSV」並命名為 database.csv。
--- 將該 CSV 檔案直接拖入網頁，即可瞬間解鎖 28 天所有日期、車種、方向、上/下/直行行為的無限交叉查詢！
+-- 將該 CSV 檔案直接命名為 database.csv 放入專案根目錄，解鎖 12 週 (3/01~5/23) 完整隨選查詢！
 SELECT 
     date AS "date",
     vehicle_type AS "vehicle_type",
@@ -153,6 +154,6 @@ SELECT
     COUNT(*) AS "trip_count",
     ROUND(AVG(trip_length), 2) AS "avg_trip_length"
 FROM tdcs_db.m06a_yongkang
-WHERE date BETWEEN '20260426' AND '20260523'
+WHERE date BETWEEN '20260301' AND '20260523'
 GROUP BY date, vehicle_type, direction, travel_type, CAST(SUBSTR(direction_time_o, 12, 2) AS INT)
 ORDER BY date, vehicle_type, direction, travel_type, hour_of_day;
