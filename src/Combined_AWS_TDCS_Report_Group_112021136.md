@@ -1,7 +1,7 @@
 # TDCS大數據於AWS 雲端平台之整合應用 - 永康交流道
 
 **小組成員與分工貢獻度：**
-* 112021136 (組長)：AWS架構設計、Lambda ETL實作、API Gateway與Athena串接、成本優化控制 (貢獻度 40%)
+* 112021136 ：AWS架構設計、Lambda ETL實作、API Gateway與Athena串接、成本優化控制 (貢獻度 40%)
 * 111021014 ：AWS Glue ETL開發、S3資料儲存與Parquet格式轉換研究 (貢獻度 20%)
 * 112021006 ：前端Vercel部署、UI視覺化、Athena API非同步串接 (貢獻度 20%)
 * 112021031 ：AWS Cost Explorer成本分析與監控、會議記錄與報告統整 (貢獻度 20%)
@@ -256,7 +256,7 @@ async function fetchTrafficDataFromAWS(dateStr) {
 ---
 
 ## 🟢 學習心得
-* **112021136 (組長)：** 
+* **112021136：** 
   透過本專案，我深入了解了 AWS 雲端架構的威力。從 S3 儲存、Athena 查詢，到結合 API Gateway + Lambda 搭建全 Serverless 的自動化管線，徹底解決了大數據處理效能瓶頸。我也學會了如何透過程式監控自動關機，優化架構以達到極致省錢。
 * **111021014：** 
   學習了 AWS Glue ETL 流程，掌握了如何將海量 CSV 轉換為高效能的 Parquet 格式。一開始在環境設定遇到困難，但在組長協助下順利完成。這對我未來處理資料工程非常有幫助。
@@ -264,3 +264,12 @@ async function fetchTrafficDataFromAWS(dateStr) {
   我主要負責前端 Vercel 與 AWS 資料的對接。學會了非同步向大數據 API 撈取資料，並以圖表呈現。過程中遇到跨域請求(CORS)問題，也透過修改 Lambda Header 成功克服。
 * **112021031：** 
   負責 AWS 帳單與成本監控。透過 Cost Explorer 我體會到雲端資源管理的重要性，好的架構設計可以節省極大的開銷，例如避免盲目 `SELECT *` 以及利用 Partition 加上 Parquet 過濾資料。
+
+
+---
+
+## 🟢 專題討論記錄與花絮
+以下為小組成員於期末專題製作期間的討論紀錄與實作照片：
+
+> ![討論照片1](./S__136724489_0.jpg)
+> ![討論照片2](./S__136724490_0.jpg)
